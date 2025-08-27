@@ -28,7 +28,7 @@ class ToiletteFactory extends Factory
 
     public function definition(): array
     {
-        $etats = ['ouvert', 'fermé', 'en maintenance'];
+        $etats = ['ouvert', 'fermé'];
         $noms = [
             'Toilettes du Front de Mer',
             'Toilettes de la Place des Salines',
