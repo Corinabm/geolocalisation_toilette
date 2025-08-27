@@ -47,7 +47,6 @@ class ToiletteFactory extends Factory
             'horaires' => $this->faker->time('H:i') . ' - ' . $this->faker->time('H:i'),
             'etat' => $this->faker->randomElement($etats),
             'image' => 'images/toilettes-' . $this->faker->slug . '.jpg',
-            'date' => now(),
             'localisation_id' => Localisation::factory(),
         ];
     }
