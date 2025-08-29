@@ -136,48 +136,54 @@
         }
 
         function displayToilettes(toilettes) {
-            toilettes.forEach(toilette => {
-                const localisation = toilette.localisation;
-                if (localisation) {
-                    const latLng = { lat: localisation.latitude, lng: localisation.longitude };
-                    let iconUrl;
-                    if (toilette.etat === 'ouvert') {
-                        iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
-                    } else {
-                        iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
-                    }
+    toilettes.forEach(toilette => {
+        const localisation = toilette.localisation;
+        if (localisation) {
+            const latLng = { lat: localisation.latitude, lng: localisation.longitude };
+            
+            // Déterminer la couleur de l'icône
+            let iconColor;
+            if (toilette.etat === 'ouvert') {
+                iconColor = 'green';
+            } else {
+                iconColor = 'red';
+            }
 
-                    const marker = new google.maps.Marker({
-                        position: latLng,
-                        map: map,
-                        title: toilette.nom,
-                        icon: {
-                            url: iconUrl
-                        }
-                    });
+            // Créer le nouvel AdvancedMarkerElement
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                map: map,
+                position: latLng,
+                title: toilette.nom,
+                // Personnaliser l'icône
+                content: new google.maps.marker.PinElement({
+                    background: iconColor,
+                    borderColor: 'white',
+                    glyphColor: 'white'
+                }).element
+            });
 
-                    const contentString =
-                        `<div>
-                            <h3>${toilette.nom}</h3>
-                            <p><strong>Adresse:</strong> ${localisation.adresse}</p>
-                            <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
-                            <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
-                            <button onclick="displayRoute(currentPosition, {lat: ${localisation.latitude}, lng: ${localisation.longitude}})">Afficher l'itinéraire</button>
-                        </div>`;
+            const contentString =
+                `<div>
+                    <h3>${toilette.nom}</h3>
+                    <p><strong>Adresse:</strong> ${localisation.adresse}</p>
+                    <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
+                    <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
+                    <button onclick="displayRoute(currentPosition, {lat: ${localisation.latitude}, lng: ${localisation.longitude}})">Afficher l'itinéraire</button>
+                </div>`;
 
-                    const infowindow = new google.maps.InfoWindow({
-                        content: contentString,
-                    });
+            const infowindow = new google.maps.InfoWindow({
+                content: contentString,
+            });
 
-                    marker.addListener('click', () => {
-                        infowindow.open({
-                            anchor: marker,
-                            map,
-                        });
-                    });
-                }
+            marker.addListener('click', () => {
+                infowindow.open({
+                    anchor: marker,
+                    map,
+                });
             });
         }
+    });
+}
 
         function displayRoute(origin, destination) {
             if (!origin) {
