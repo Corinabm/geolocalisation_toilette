@@ -133,51 +133,64 @@
         }
 
         function displayToilettes(toilettes) {
-            toilettes.forEach(toilette => {
-                const localisation = toilette.localisation;
-                if (localisation) {
-                    const latLng = { lat: localisation.latitude, lng: localisation.longitude };
-                    
-                    let iconColor;
-                    if (toilette.etat === 'ouvert') {
-                        iconColor = 'green';
-                    } else {
-                        iconColor = 'red';
-                    }
+    if (!toilettes || !Array.isArray(toilettes)) {
+        console.error("Les données des toilettes sont manquantes ou ne sont pas un tableau.");
+        return;
+    }
 
-                    const marker = new google.maps.marker.AdvancedMarkerElement({
-                        map: map,
-                        position: latLng,
-                        title: toilette.nom,
-                        content: new google.maps.marker.PinElement({
-                            background: iconColor,
-                            borderColor: 'white',
-                            glyphColor: 'white'
-                        }).element
-                    });
+    toilettes.forEach(toilette => {
+        const localisation = toilette.localisation;
 
-                    const contentString =
-                        `<div>
-                            <h3>${toilette.nom}</h3>
-                            <p><strong>Adresse:</strong> ${localisation.adresse}</p>
-                            <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
-                            <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
-                            <button onclick="displayRoute(currentPosition, {lat: ${localisation.latitude}, lng: ${localisation.longitude}})">Afficher l'itinéraire</button>
-                        </div>`;
+        // Add a robust check for valid data before creating a marker
+        if (
+            localisation &&
+            typeof localisation.latitude === 'number' &&
+            typeof localisation.longitude === 'number'
+        ) {
+            const latLng = { lat: localisation.latitude, lng: localisation.longitude };
 
-                    const infowindow = new google.maps.InfoWindow({
-                        content: contentString,
-                    });
+            let iconColor;
+            if (toilette.etat === 'ouvert') {
+                iconColor = 'green';
+            } else {
+                iconColor = 'red';
+            }
 
-                    marker.addListener('click', () => {
-                        infowindow.open({
-                            anchor: marker,
-                            map,
-                        });
-                    });
-                }
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                map: map,
+                position: latLng,
+                title: toilette.nom,
+                content: new google.maps.marker.PinElement({
+                    background: iconColor,
+                    borderColor: 'white',
+                    glyphColor: 'white'
+                }).element
             });
+
+            const contentString =
+                `<div>
+                    <h3>${toilette.nom}</h3>
+                    <p><strong>Adresse:</strong> ${localisation.adresse}</p>
+                    <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
+                    <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
+                    <button onclick="displayRoute(currentPosition, {lat: ${localisation.latitude}, lng: ${localisation.longitude}})">Afficher l'itinéraire</button>
+                </div>`;
+
+            const infowindow = new google.maps.InfoWindow({
+                content: contentString,
+            });
+
+            marker.addListener('click', () => {
+                infowindow.open({
+                    anchor: marker,
+                    map,
+                });
+            });
+        } else {
+            console.warn("Données de localisation invalides pour une toilette:", toilette);
         }
+    });
+}
 
         function displayRoute(origin, destination) {
             if (!origin) {
