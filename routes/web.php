@@ -14,3 +14,5 @@ Route::get('/',[ToiletteController::class, 'index'])->name('toilettes.index');
 
 /* fournir les données des toilettes au format json */
 Route::get('/api/toilettes', [ToiletteController::class, 'api'])->name('toilettes.api');
+
+Route::get('/api/toilettes-proches', [ToiletteController::class, 'getProches'])->name('toilettes.proches');
