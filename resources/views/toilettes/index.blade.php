@@ -174,7 +174,7 @@
                         <p><strong>Adresse:</strong> ${localisation.adresse}</p>
                         <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
                         <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
-                        <button onclick="displayRoute(currentPosition, {lat: ${latitude}, lng: ${longitude}})">Afficher l'itinéraire</button>
+                        <button onclick="displayRoute(currentPosition, {lat: ${lat}, lng: ${lng}})">Afficher l'itinéraire</button>
                     </div>`;
 
                 const infowindow = new google.maps.InfoWindow({
