@@ -44,12 +44,13 @@
         let currentPosition;
         let directionsService;
         let directionsRenderer;
-
+        
+        // This is the main entry point for the Google Maps API
         function initMap() {
             // Position par défaut : Fort-de-France, Martinique
             const defaultPosition = { lat: 14.60, lng: -61.07 };
 
-            // Crée la carte
+            // Crée la carte avec une position par défaut
             map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 12,
                 center: defaultPosition,
@@ -63,6 +64,7 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
+                        // Succès : si l'utilisateur autorise l'accès
                         currentPosition = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
@@ -77,25 +79,42 @@
                                 url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
                             }
                         });
+                        // Charge les toilettes proches APRES avoir la position
                         loadToilettes(currentPosition);
                     },
-                    () => {
-                        handleLocationError(true, map);
+                    (error) => {
+                        // Échec : si l'utilisateur refuse l'accès ou autre erreur
+                        handleLocationError(error);
+                        // Charge toutes les toilettes si la géolocalisation échoue
                         loadAllToilettes();
                     }
                 );
             } else {
-                handleLocationError(false, map);
+                // Le navigateur ne supporte pas la géolocalisation
+                handleLocationError(null);
+                // Charge toutes les toilettes si la fonctionnalité est absente
                 loadAllToilettes();
             }
         }
 
-        function handleLocationError(browserHasGeolocation, map) {
-            console.error(
-                browserHasGeolocation
-                    ? "Erreur : L'accès à la géolocalisation a été refusé."
-                    : "Erreur : Votre navigateur ne supporte pas la géolocalisation."
-            );
+        function handleLocationError(error) {
+            let message = '';
+            if (error) {
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message = "L'accès à la géolocalisation a été refusé.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message = "Les informations de localisation ne sont pas disponibles.";
+                        break;
+                    case error.TIMEOUT:
+                        message = "La demande de géolocalisation a expiré.";
+                        break;
+                }
+            } else {
+                message = "Votre navigateur ne supporte pas la géolocalisation.";
+            }
+            console.error(message);
         }
 
         function loadToilettes(position) {
@@ -160,7 +179,6 @@
             });
         }
 
-        // Nouvelle fonction pour afficher l'itinéraire et la distance
         function displayRoute(origin, destination) {
             if (!origin) {
                 alert("Votre position n'est pas disponible pour calculer l'itinéraire.");
