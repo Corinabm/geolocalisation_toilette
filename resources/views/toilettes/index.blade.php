@@ -5,20 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Géolocalisation de Toilettes Publiques</title>
     <style>
+        /* Styles pour rendre la carte en plein écran */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
         #map {
-            height: 500px;
-            width: 100%;
+            height: 100vh; /* 100% de la hauteur du viewport */
+            width: 100vw;  /* 100% de la largeur du viewport */
+        }
+
+        #panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.3);
+            z-index: 10;
         }
     </style>
 </head>
 <body>
 
-    <h1>Géolocalisation de Toilettes Publiques</h1>
     <div id="map"></div>
+    <div id="panel">
+        <strong>Distance et Durée</strong>
+        <div id="distance"></div>
+        <div id="duration"></div>
+    </div>
 
     <script>
         let map;
         let currentPosition;
+        let directionsService;
+        let directionsRenderer;
 
         function initMap() {
             // Position par défaut : Fort-de-France, Martinique
@@ -30,44 +55,37 @@
                 center: defaultPosition,
             });
 
+            // Initialise les services de directions
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+
             // Tente de récupérer la position de l'utilisateur
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        // Fonction de succès : si l'utilisateur autorise l'accès
                         currentPosition = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
                         };
-
-                        // Centre la carte sur la position de l'utilisateur
                         map.setCenter(currentPosition);
 
-                        // Ajoute un marqueur pour l'utilisateur
                         new google.maps.Marker({
                             position: currentPosition,
                             map: map,
                             title: "Votre position",
                             icon: {
-                                // Icône par défaut pour la position de l'utilisateur
                                 url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
                             }
                         });
-
-                        // Charge les toilettes les plus proches une fois la position obtenue
                         loadToilettes(currentPosition);
                     },
                     () => {
-                        // Fonction d'erreur : si l'utilisateur refuse l'accès
                         handleLocationError(true, map);
-                        // Charge toutes les toilettes si l'accès est refusé
                         loadAllToilettes();
                     }
                 );
             } else {
-                // Le navigateur ne supporte pas la géolocalisation
                 handleLocationError(false, map);
-                // Charge toutes les toilettes si la fonctionnalité est absente
                 loadAllToilettes();
             }
         }
@@ -80,9 +98,7 @@
             );
         }
 
-        // Fonction pour charger les toilettes les plus proches
         function loadToilettes(position) {
-            // Appel de la nouvelle API Laravel avec les coordonnées de l'utilisateur
             fetch(`/api/toilettes-proches?lat=${position.lat}&lng=${position.lng}`)
                 .then(response => response.json())
                 .then(data => {
@@ -91,7 +107,6 @@
                 .catch(error => console.error('Erreur lors de la récupération des données:', error));
         }
 
-        // Fonction pour charger toutes les toilettes (en cas d'échec de géolocalisation)
         function loadAllToilettes() {
             fetch('/api/toilettes')
                 .then(response => response.json())
@@ -101,18 +116,15 @@
                 .catch(error => console.error('Erreur lors de la récupération des données:', error));
         }
 
-        // Fonction pour afficher les marqueurs
         function displayToilettes(toilettes) {
             toilettes.forEach(toilette => {
                 const localisation = toilette.localisation;
                 if (localisation) {
                     const latLng = { lat: localisation.latitude, lng: localisation.longitude };
-
-                    // Détermination de l'icône en fonction de l'état
                     let iconUrl;
                     if (toilette.etat === 'ouvert') {
                         iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
-                    } else { // 'ferme'
+                    } else {
                         iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
                     }
 
@@ -121,24 +133,23 @@
                         map: map,
                         title: toilette.nom,
                         icon: {
-                            url: iconUrl // Attribution de l'icône personnalisée
+                            url: iconUrl
                         }
                     });
 
-                    // Création d'un contenu pour l'infobulle
                     const contentString =
                         `<div>
                             <h3>${toilette.nom}</h3>
                             <p><strong>Adresse:</strong> ${localisation.adresse}</p>
                             <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
                             <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
+                            <button onclick="displayRoute(currentPosition, {lat: ${localisation.latitude}, lng: ${localisation.longitude}})">Afficher l'itinéraire</button>
                         </div>`;
 
                     const infowindow = new google.maps.InfoWindow({
                         content: contentString,
                     });
 
-                    // Ajout d'un écouteur d'événement pour afficher l'infobulle au clic
                     marker.addListener('click', () => {
                         infowindow.open({
                             anchor: marker,
@@ -148,8 +159,32 @@
                 }
             });
         }
+
+        // Nouvelle fonction pour afficher l'itinéraire et la distance
+        function displayRoute(origin, destination) {
+            if (!origin) {
+                alert("Votre position n'est pas disponible pour calculer l'itinéraire.");
+                return;
+            }
+
+            directionsService.route({
+                origin: origin,
+                destination: destination,
+                travelMode: 'WALKING'
+            }, (response, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(response);
+
+                    const route = response.routes[0].legs[0];
+                    document.getElementById('distance').innerHTML = `Distance : ${route.distance.text}`;
+                    document.getElementById('duration').innerHTML = `Durée : ${route.duration.text}`;
+                } else {
+                    window.alert('Impossible de trouver un itinéraire. Erreur : ' + status);
+                }
+            });
+        }
     </script>
     
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&callback=initMap&libraries=routes"></script>
 </body>
 </html>
