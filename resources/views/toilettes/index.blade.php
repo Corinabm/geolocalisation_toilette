@@ -141,53 +141,57 @@
     toilettes.forEach(toilette => {
         const localisation = toilette.localisation;
 
-        // Add a robust check for valid data before creating a marker
-        if (
-            localisation &&
-            typeof localisation.latitude === 'number' &&
-            typeof localisation.longitude === 'number'
-        ) {
-            const latLng = { lat: localisation.latitude, lng: localisation.longitude };
+        if (localisation && localisation.latitude != null && localisation.longitude != null) {
+            // Convertir les chaînes de caractères en nombres décimaux
+            const lat = parseFloat(localisation.latitude);
+            const lng = parseFloat(localisation.longitude);
 
-            let iconColor;
-            if (toilette.etat === 'ouvert') {
-                iconColor = 'green';
-            } else {
-                iconColor = 'red';
-            }
+            // Vérifier que la conversion a réussi
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const latLng = { lat: lat, lng: lng };
 
-            const marker = new google.maps.marker.AdvancedMarkerElement({
-                map: map,
-                position: latLng,
-                title: toilette.nom,
-                content: new google.maps.marker.PinElement({
-                    background: iconColor,
-                    borderColor: 'white',
-                    glyphColor: 'white'
-                }).element
-            });
+                let iconColor;
+                if (toilette.etat === 'ouvert') {
+                    iconColor = 'green';
+                } else {
+                    iconColor = 'red';
+                }
 
-            const contentString =
-                `<div>
-                    <h3>${toilette.nom}</h3>
-                    <p><strong>Adresse:</strong> ${localisation.adresse}</p>
-                    <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
-                    <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
-                    <button onclick="displayRoute(currentPosition, {lat: ${localisation.latitude}, lng: ${localisation.longitude}})">Afficher l'itinéraire</button>
-                </div>`;
-
-            const infowindow = new google.maps.InfoWindow({
-                content: contentString,
-            });
-
-            marker.addListener('click', () => {
-                infowindow.open({
-                    anchor: marker,
-                    map,
+                const marker = new google.maps.marker.AdvancedMarkerElement({
+                    map: map,
+                    position: latLng,
+                    title: toilette.nom,
+                    content: new google.maps.marker.PinElement({
+                        background: iconColor,
+                        borderColor: 'white',
+                        glyphColor: 'white'
+                    }).element
                 });
-            });
+
+                const contentString =
+                    `<div>
+                        <h3>${toilette.nom}</h3>
+                        <p><strong>Adresse:</strong> ${localisation.adresse}</p>
+                        <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
+                        <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
+                        <button onclick="displayRoute(currentPosition, {lat: ${latitude}, lng: ${longitude}})">Afficher l'itinéraire</button>
+                    </div>`;
+
+                const infowindow = new google.maps.InfoWindow({
+                    content: contentString,
+                });
+
+                marker.addListener('click', () => {
+                    infowindow.open({
+                        anchor: marker,
+                        map,
+                    });
+                });
+            } else {
+                console.warn("Données de localisation invalides (non numériques) pour une toilette:", toilette);
+            }
         } else {
-            console.warn("Données de localisation invalides pour une toilette:", toilette);
+            console.warn("Données de localisation manquantes pour une toilette:", toilette);
         }
     });
 }
