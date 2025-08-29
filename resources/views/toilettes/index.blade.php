@@ -49,10 +49,11 @@
             // Position par défaut : Fort-de-France, Martinique
             const defaultPosition = { lat: 14.60, lng: -61.07 };
 
-            // Crée la carte avec une position par défaut
+            // Crée la carte en incluant le Map ID
             map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 12,
                 center: defaultPosition,
+                mapId: 'YOUR_MAP_ID_HERE' // <-- L'ERREUR ÉTAIT ICI
             });
 
             // Initialise les services de directions
@@ -74,7 +75,7 @@
                             map: map,
                             title: "Votre position",
                             content: new google.maps.marker.PinElement({
-                                background: 'blue', // Couleur pour la position de l'utilisateur
+                                background: 'blue',
                                 borderColor: 'white',
                                 glyphColor: 'white'
                             }).element
@@ -202,6 +203,6 @@
         }
     </script>
     
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&callback=initMap&libraries=routes,marker&loading=async"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&callback=initMap&libraries=routes,marker&loading=async&mapId=YOUR_MAP_ID_HERE"></script>
 </body>
 </html>
