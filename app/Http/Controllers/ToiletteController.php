@@ -11,9 +11,13 @@ class ToiletteController extends Controller
     {
         /*$toilettes = Toilette::all(); 
         dd($toilettes); */
+        /* Recupere la cle API du fichier .env */
+        $apiKey = env('GOOGLE_MAPS_API_KEY');
 
-        /* retourne la vue Blade qui contient la map */
-        return view('toilettes.index');
+        /* Passe la cle API à la vue */
+        return view('toilettes.index', [
+            'apiKey' => $apiKey]);
+        
 
     }
 
