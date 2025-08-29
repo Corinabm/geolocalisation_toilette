@@ -45,7 +45,6 @@
         let directionsService;
         let directionsRenderer;
         
-        // This is the main entry point for the Google Maps API
         function initMap() {
             // Position par défaut : Fort-de-France, Martinique
             const defaultPosition = { lat: 14.60, lng: -61.07 };
@@ -64,35 +63,32 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        // Succès : si l'utilisateur autorise l'accès
                         currentPosition = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
                         };
                         map.setCenter(currentPosition);
 
-                        new google.maps.Marker({
+                        new google.maps.marker.AdvancedMarkerElement({
                             position: currentPosition,
                             map: map,
                             title: "Votre position",
-                            icon: {
-                                url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-                            }
+                            content: new google.maps.marker.PinElement({
+                                background: 'blue', // Couleur pour la position de l'utilisateur
+                                borderColor: 'white',
+                                glyphColor: 'white'
+                            }).element
                         });
-                        // Charge les toilettes proches APRES avoir la position
+
                         loadToilettes(currentPosition);
                     },
                     (error) => {
-                        // Échec : si l'utilisateur refuse l'accès ou autre erreur
                         handleLocationError(error);
-                        // Charge toutes les toilettes si la géolocalisation échoue
                         loadAllToilettes();
                     }
                 );
             } else {
-                // Le navigateur ne supporte pas la géolocalisation
                 handleLocationError(null);
-                // Charge toutes les toilettes si la fonctionnalité est absente
                 loadAllToilettes();
             }
         }
@@ -136,54 +132,51 @@
         }
 
         function displayToilettes(toilettes) {
-    toilettes.forEach(toilette => {
-        const localisation = toilette.localisation;
-        if (localisation) {
-            const latLng = { lat: localisation.latitude, lng: localisation.longitude };
-            
-            // Déterminer la couleur de l'icône
-            let iconColor;
-            if (toilette.etat === 'ouvert') {
-                iconColor = 'green';
-            } else {
-                iconColor = 'red';
-            }
+            toilettes.forEach(toilette => {
+                const localisation = toilette.localisation;
+                if (localisation) {
+                    const latLng = { lat: localisation.latitude, lng: localisation.longitude };
+                    
+                    let iconColor;
+                    if (toilette.etat === 'ouvert') {
+                        iconColor = 'green';
+                    } else {
+                        iconColor = 'red';
+                    }
 
-            // Créer le nouvel AdvancedMarkerElement
-            const marker = new google.maps.marker.AdvancedMarkerElement({
-                map: map,
-                position: latLng,
-                title: toilette.nom,
-                // Personnaliser l'icône
-                content: new google.maps.marker.PinElement({
-                    background: iconColor,
-                    borderColor: 'white',
-                    glyphColor: 'white'
-                }).element
-            });
+                    const marker = new google.maps.marker.AdvancedMarkerElement({
+                        map: map,
+                        position: latLng,
+                        title: toilette.nom,
+                        content: new google.maps.marker.PinElement({
+                            background: iconColor,
+                            borderColor: 'white',
+                            glyphColor: 'white'
+                        }).element
+                    });
 
-            const contentString =
-                `<div>
-                    <h3>${toilette.nom}</h3>
-                    <p><strong>Adresse:</strong> ${localisation.adresse}</p>
-                    <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
-                    <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
-                    <button onclick="displayRoute(currentPosition, {lat: ${localisation.latitude}, lng: ${localisation.longitude}})">Afficher l'itinéraire</button>
-                </div>`;
+                    const contentString =
+                        `<div>
+                            <h3>${toilette.nom}</h3>
+                            <p><strong>Adresse:</strong> ${localisation.adresse}</p>
+                            <p><strong>Horaires:</strong> ${toilette.horaires || 'Non spécifié'}</p>
+                            <p><strong>État:</strong> ${toilette.etat === 'ouvert' ? '🟢 Ouvert' : '🔴 Fermé'}</p>
+                            <button onclick="displayRoute(currentPosition, {lat: ${localisation.latitude}, lng: ${localisation.longitude}})">Afficher l'itinéraire</button>
+                        </div>`;
 
-            const infowindow = new google.maps.InfoWindow({
-                content: contentString,
-            });
+                    const infowindow = new google.maps.InfoWindow({
+                        content: contentString,
+                    });
 
-            marker.addListener('click', () => {
-                infowindow.open({
-                    anchor: marker,
-                    map,
-                });
+                    marker.addListener('click', () => {
+                        infowindow.open({
+                            anchor: marker,
+                            map,
+                        });
+                    });
+                }
             });
         }
-    });
-}
 
         function displayRoute(origin, destination) {
             if (!origin) {
@@ -209,6 +202,6 @@
         }
     </script>
     
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&callback=initMap&libraries=routes&loading=async"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&callback=initMap&libraries=routes,marker&loading=async"></script>
 </body>
 </html>
